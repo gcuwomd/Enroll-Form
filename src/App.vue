@@ -3,18 +3,31 @@
 // Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
 import { defineComponent } from "vue";
 import card from "./components/EnrollForm.vue";
-
 </script>
 
 <template>
     <div class="container">
-        <n-h2>网信委招新报名系统</n-h2>
+        <n-h2 class="title">
+            <span>网信委招新报名系统</span>
+            <img src="./assets/logo.png" alt="" class="Logo" />
+        </n-h2>
+
         <card />
     </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .container {
     padding: 10px 20px;
+    .title{
+        display: flex;
+        align-items: center;
+        gap:10px;
+        .Logo {
+        width: 40px;
+        height: 40px;
+        display: inline;
+    }
+    }
 }
 </style>

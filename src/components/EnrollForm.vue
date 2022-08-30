@@ -1,83 +1,71 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
-import { IApply, IOption } from "../types/index";
-const formRef = ref();
+import { reactive, ref, watch } from "vue";
+import { FormInst, SelectOption } from "naive-ui";
+import { IApply } from "../types/index";
+import { collegeOptions, sectionOptions } from "../assets/ts/options";
+import { formRules } from "../assets/ts/rules";
+import { baseAxios } from "../const";
+const formRef = ref<FormInst | null>(null);
+const backToTop = ref();
 const applyModel: IApply = reactive({
     id: null,
     name: null,
     college: null,
+    major: null,
     firstIntention: null,
     secondIntention: null,
     phone: null,
     introduction: null,
     picture: null,
 });
-const formRules = {};
-const collegeOptions: Array<IOption> = [
-    {
-        label: "计算机工程学院",
-        value: 1,
-    },
-    {
-        label: "电气工程学院",
-        value: 2,
-    },
-    {
-        label: "外国语学院",
-        value: 3,
-    },
-    {
-        label: "大数据学院",
-        value: 4,
-    },
-    {
-        label: "管理学院",
-        value: 5,
-    },
-    {
-        label: "通信工程学院",
-        value: 6,
-    },
-    {
-        label: "国际商学院",
-        value: 7,
-    },
-    {
-        label: "电子信息工程学院",
-        value: 8,
-    },
-    {
-        label: "土木工程学院",
-        value: 9,
-    },
-];
-const sectionOptions: Array<IOption> = [
-    {
-        label: "网站运维部",
-        value: 11,
-    },
-    {
-        label: "行政秘书部",
-        value: 12,
-    },
-    {
-        label: "网络运维部",
-        value: 13,
-    },
-    {
-        label: "信息化运维部",
-        value: 14,
-    },
-];
+
+const firstSectionOption = reactive(sectionOptions); //第一意向选项卡
+const secondSectionOption = reactive(sectionOptions); //第二意向选项卡
+const currentSelectSection: Array<number> = reactive([]); //当前第一、二意向
+/**
+ * @description 两个watch分别监听第一、二意向两个选项卡，不可选择两个相同的意向
+ */
+watch(
+    () => applyModel.firstIntention,
+    (val) => {
+        if (val) {
+            currentSelectSection[0] = val;
+        }
+        secondSectionOption.forEach((item) => {
+            if (item.value === val || item.value === currentSelectSection[1]) {
+                item.disabled = true;
+            } else {
+                item.disabled = false;
+            }
+        });
+    }
+);
+watch(
+    () => applyModel.secondIntention,
+    (val) => {
+        if (val) {
+            currentSelectSection[1] = val;
+        }
+        firstSectionOption.forEach((item) => {
+            if (item.value === val || item.value === currentSelectSection[0]) {
+                item.disabled = true;
+            } else {
+                item.disabled = false;
+            }
+        });
+    }
+);
+function onSubmit(evt: MouseEvent) {
+    evt.preventDefault();
+    formRef.value?.validate((err) => {
+        if (!err) {
+            baseAxios.post("sys/submit", applyModel);
+        }
+    });
+}
 </script>
 <template>
     <n-card class="form-card">
-        <!-- <template #cover>
-            <div class="form-card-logo">
-                <img src="../assets/logo.png" alt="" />
-            </div>
-        </template> -->
-        <!-- <n-divider /> -->
         <n-form
             size="medium"
             label-placement="top"
@@ -104,22 +92,31 @@ const sectionOptions: Array<IOption> = [
                     placeholder="请选择学院"
                 ></n-select>
             </n-form-item>
+            <n-form-item label="专业" path="major">
+                <n-input
+                    v-model:value="applyModel.major"
+                    placeholder="请输入专业"
+                ></n-input>
+            </n-form-item>
             <n-form-item label="第一意向部门" path="firstIntention">
                 <n-select
                     v-model:value="applyModel.firstIntention"
-                    :options="sectionOptions"
+                    :options="firstSectionOption"
                     placeholder="请选择第一意向部门"
                 ></n-select>
             </n-form-item>
             <n-form-item label="第二意向部门" path="secondIntention">
                 <n-select
                     v-model:value="applyModel.secondIntention"
-                    :options="sectionOptions"
+                    :options="secondSectionOption"
                     placeholder="请选择第二意向部门"
                 ></n-select>
             </n-form-item>
             <n-form-item label="联系电话" path="phone">
-                <n-input v-model:value="applyModel.phone" placeholder="请输入联系电话"></n-input>
+                <n-input
+                    v-model:value="applyModel.phone"
+                    placeholder="请输入联系电话"
+                ></n-input>
             </n-form-item>
             <n-form-item label="自我介绍" path="introduction">
                 <n-input
@@ -129,7 +126,7 @@ const sectionOptions: Array<IOption> = [
                     placeholder="用不少于10个字符的一段话介绍一下自己吧~"
                 ></n-input>
             </n-form-item>
-            <n-form-item label="上传照片">
+            <n-form-item label="上传照片" :show-label="false">
                 <n-space vertical>
                     <span>上传你的照片可以加深我们对你的印象哦~</span>
                     <n-upload>
@@ -138,7 +135,9 @@ const sectionOptions: Array<IOption> = [
                 </n-space>
             </n-form-item>
             <n-form-item>
-                <n-button style="width: 100%">提交</n-button>
+                <n-button style="width: 100%" @click="onSubmit" type="primary"
+                    >提交</n-button
+                >
             </n-form-item>
         </n-form>
     </n-card>
@@ -151,8 +150,8 @@ const sectionOptions: Array<IOption> = [
         display: flex;
         justify-content: center;
         img {
-            width: 50vw !important;
-            height: 50vw !important;
+            width: 50vw;
+            height: 50vw;
         }
     }
 }
