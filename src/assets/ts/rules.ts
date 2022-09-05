@@ -21,10 +21,17 @@ export const formRules: FormRules = {
       trigger: "blur",
     },
   ],
+  sex: [
+    {
+      required: true,
+      message: "请选择性别",
+      trigger: "blur"
+    }
+  ],
   college: [
     {
       required: true,
-      type: "number",
+      type: "string",
       message: "请选择你的学院",
       trigger: ["blur", "change"],
     },
@@ -38,7 +45,7 @@ export const formRules: FormRules = {
   ],
   firstIntention: [
     {
-      type: "number",
+      type: "string",
       required: true,
       message: "请选择你的第一意向部门",
       trigger: ["blur", "change"],
@@ -46,7 +53,7 @@ export const formRules: FormRules = {
   ],
   secondIntention: [
     {
-      type: "number",
+      type: "string",
       required: true,
       message: "请选择你的第二意向部门",
       trigger: ["blur", "change"],

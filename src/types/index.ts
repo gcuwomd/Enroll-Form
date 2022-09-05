@@ -1,16 +1,18 @@
 export interface IApply {
-  id: number | null;
+  id: string | null;
   name: string | null;
+  sex: string | null;
   college: string | null;
   major: string | null;
-  firstIntention: number | null;
-  secondIntention: number | null;
-  phone: number | null;
+  firstIntention: string | null;
+  secondIntention: string | null;
+  phone: string | null;
+  adjust: boolean;
   introduction: string | null;
-  picture?: string | null;
+  picture?: string;
 }
 export interface IOption {
-  value: number;
+  value: string;
   label: string;
   disabled?:boolean;
 }

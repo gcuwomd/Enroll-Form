@@ -12,7 +12,9 @@ import card from "./components/EnrollForm.vue";
             <img src="./assets/logo.png" alt="" class="Logo" />
         </n-h2>
 
-        <card />
+        <n-message-provider>
+            <card />
+        </n-message-provider>
     </div>
 </template>
 
