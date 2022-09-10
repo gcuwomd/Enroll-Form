@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from "vue";
+import { onMounted, reactive, ref, watch } from "vue";
 import { FormInst, SelectOption, UploadFileInfo, useMessage } from "naive-ui";
-import { IApply } from "../types/index";
+import { compressAccurately } from "image-conversion";
+import { IApply, ISubmitType, IPicList } from "../types/index";
 import { collegeOptions, sectionOptions } from "../assets/ts/options";
 import { formRules } from "../assets/ts/rules";
 import { baseAxios, toBase64 } from "../const";
+import { useRouter } from "vue-router";
+const router = useRouter();
 const message = useMessage();
 const formRef = ref<FormInst | null>(null);
 const applyModel: IApply = reactive({
@@ -18,13 +21,21 @@ const applyModel: IApply = reactive({
   phone: null,
   adjust: false,
   introduction: null,
-  picture: "-1",
 });
 const sexs: Array<string> = ["男", "女"];
+
+let qt_id: number = -1;
+let pic_id: number = -1;
+let picture: string = "";
+let picIDList: Array<IPicList> = [];
 
 const firstSectionOption = reactive(sectionOptions); //第一意向选项卡
 const secondSectionOption = reactive(sectionOptions); //第二意向选项卡
 const currentSelectSection: Array<string> = reactive([]); //当前第一、二意向
+const submitType: ISubmitType = reactive({
+  isFirst: false,
+  formid: -1,
+});
 /**
  * @description 两个watch分别监听第一、二意向两个选项卡，不可选择两个相同的意向
  */
@@ -58,13 +69,66 @@ watch(
     });
   }
 );
+/**
+ * @description 监听学号，判断是新增问卷还是更新问卷
+ */
+watch(
+  () => applyModel.id,
+  (val) => {
+    if (val?.length === 12) {
+      baseAxios
+        .post(
+          "selectByKV",
+          { key: "学号", value: val },
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        )
+        .then((res) => {
+          if (res.data.data.length === 0) {
+            submitType.isFirst = true;
+            submitType.formid = -1;
+          } else {
+            submitType.isFirst = false;
+            submitType.formid = res.data.data[0].id;
+          }
+        });
+    }
+  }
+);
+watch(
+  () => submitType.formid,
+  (val) => {
+    console.log(11);
+    if (!submitType.isFirst) {
+      console.log(22);
+      
+      picIDList.forEach((item) => {
+        if (item.qt_id === submitType.formid) {
+          pic_id = item.id;
+          console.log(pic_id);
+          
+          return;
+        }
+      });
+    }
+  }
+);
+onMounted(() => {
+  baseAxios.post("allPicID").then((res) => {
+    picIDList = res.data.data;
+    console.log(picIDList);
+  });
+});
 function onSubmit(evt: MouseEvent) {
   evt.preventDefault();
   formRef.value?.validate((err) => {
     if (!err) {
-      let { name, sex, major, phone, adjust, picture } = applyModel;
+      let { name, sex, major, phone, adjust } = applyModel;
       let params = {
-        id: 123456,
+        id: -1,
         stu_id: applyModel.id,
         name,
         sex,
@@ -75,17 +139,82 @@ function onSubmit(evt: MouseEvent) {
         intention2: applyModel.secondIntention,
         isAdjust: adjust,
         introduce: applyModel.introduction,
-        picture,
       };
-      baseAxios
-        .post("add", params, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        })
-        .then((res) => {
-          console.log(res);
-        });
+      if (submitType.isFirst) {
+        baseAxios
+          .post("add", params, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          })
+          .then((res) => {
+            if (picture) {
+              qt_id = res.data.data[0].id;
+              let params = {
+                qt_id,
+                picture,
+              };
+              baseAxios
+                .post("insertPic", params, {
+                  headers: {
+                    "Content-Type": "multipart/form-data",
+                  },
+                })
+                .then((res) => {
+                  console.log(res);
+                });
+            }
+
+            //router.push({ path: "/welcome" });
+          })
+          .catch((err) => {
+            message.error(err);
+          });
+      } else {
+        params.id = submitType.formid;
+        baseAxios
+          .post("updateById", params, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          })
+          .then((res) => {
+            if (picture) {
+              if (pic_id === -1) {
+                let params = {
+                  qt_id: submitType.formid,
+                  picture,
+                };
+                baseAxios
+                  .post("insertPic", params, {
+                    headers: {
+                      "Content-Type": "multipart/form-data",
+                    },
+                  })
+                  .then((res) => {
+                    console.log(res);
+                  });
+              }else{
+                let params = {
+                  qt_id: submitType.formid,
+                  id:pic_id,
+                  picture
+                };
+                baseAxios.post('updatePic',params,{
+                  headers: {
+                      "Content-Type": "multipart/form-data",
+                    },
+                }).then((res)=>{
+                  console.log(res);
+                })
+              }
+            }
+            //router.push({ path: "/welcome" });
+          })
+          .catch((err) => {
+            message.error(err);
+          });
+      }
     }
   });
 }
@@ -100,11 +229,23 @@ function onChange(options: {
 }) {
   if (options.fileList.length !== 0) {
     const srcFile: any = options.fileList[0].file;
-    const base64File = toBase64(srcFile).then((res: any) => {
-      applyModel.picture = res;
-    });
+    if (srcFile.size / 1024 > 1024) {
+      compressAccurately(srcFile, {
+        size: 1024,
+        accuracy: 0.9,
+        type: srcFile.type,
+      }).then((res) => {
+        toBase64(res).then((base64: any) => {
+          picture = base64;
+        });
+      });
+    } else {
+      toBase64(srcFile).then((res: any) => {
+        picture = res;
+      });
+    }
   } else {
-    applyModel.picture = "-1";
+    picture = "";
   }
 }
 /**
@@ -123,7 +264,7 @@ function checkFileType(data: {
 }
 </script>
 <template>
-  <n-card class="form-card">
+  <n-card class="shadow">
     <n-form
       size="medium"
       label-placement="top"
@@ -221,18 +362,4 @@ function checkFileType(data: {
     </n-form>
   </n-card>
 </template>
-<style lang="scss" scoped>
-.form-card {
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-
-  .form-card-logo {
-    display: flex;
-    justify-content: center;
-
-    img {
-      width: 50vw;
-      height: 50vw;
-    }
-  }
-}
-</style>
+<style lang="scss" scoped></style>

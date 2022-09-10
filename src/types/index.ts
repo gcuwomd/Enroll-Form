@@ -9,10 +9,19 @@ export interface IApply {
   phone: string | null;
   adjust: boolean;
   introduction: string | null;
-  picture?: string;
 }
 export interface IOption {
   value: string;
   label: string;
   disabled?:boolean;
+}
+export interface ISubmitType {
+  isFirst:boolean;
+  formid:number;
+}
+
+export interface IPicList {
+  id:number;
+  qt_id:number;
+  picture:null;
 }

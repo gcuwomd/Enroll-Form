@@ -1,4 +1,5 @@
 import { FormRules, FormItemRule } from "naive-ui";
+import { baseAxios } from "../../const";
 export const formRules: FormRules = {
   id: [
     {

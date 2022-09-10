@@ -9,7 +9,7 @@ const conf = {
 };
 export const baseAxios = axios.create(conf);
 
-export function toBase64(file: File) {
+export function toBase64(file: File | Blob) {
   const reader = new FileReader();
   return new Promise((resolve, reject) => {
     let base64Str: any = "";
