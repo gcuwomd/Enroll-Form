@@ -101,15 +101,10 @@ watch(
 watch(
   () => submitType.formid,
   (val) => {
-    console.log(11);
     if (!submitType.isFirst) {
-      console.log(22);
-      
       picIDList.forEach((item) => {
         if (item.qt_id === submitType.formid) {
           pic_id = item.id;
-          console.log(pic_id);
-          
           return;
         }
       });
@@ -119,7 +114,6 @@ watch(
 onMounted(() => {
   baseAxios.post("allPicID").then((res) => {
     picIDList = res.data.data;
-    console.log(picIDList);
   });
 });
 function onSubmit(evt: MouseEvent) {
@@ -160,12 +154,10 @@ function onSubmit(evt: MouseEvent) {
                     "Content-Type": "multipart/form-data",
                   },
                 })
-                .then((res) => {
-                  console.log(res);
+                .finally(() => {
+                  router.push({ path: "/welcome" });
                 });
             }
-
-            //router.push({ path: "/welcome" });
           })
           .catch((err) => {
             message.error(err);
@@ -191,25 +183,26 @@ function onSubmit(evt: MouseEvent) {
                       "Content-Type": "multipart/form-data",
                     },
                   })
-                  .then((res) => {
-                    console.log(res);
+                  .finally(() => {
+                    router.push({ path: "/welcome" });
                   });
-              }else{
+              } else {
                 let params = {
                   qt_id: submitType.formid,
-                  id:pic_id,
-                  picture
+                  id: pic_id,
+                  picture,
                 };
-                baseAxios.post('updatePic',params,{
-                  headers: {
+                baseAxios
+                  .post("updatePic", params, {
+                    headers: {
                       "Content-Type": "multipart/form-data",
                     },
-                }).then((res)=>{
-                  console.log(res);
-                })
+                  })
+                  .finally(() => {
+                    router.push({ path: "/welcome" });
+                  });
               }
             }
-            //router.push({ path: "/welcome" });
           })
           .catch((err) => {
             message.error(err);

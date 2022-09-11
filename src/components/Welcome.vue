@@ -53,13 +53,14 @@ const linear =
   "linear-gradient(to right, #ff6f91, #ff717d, #ff7767, #ff8051, #ff8b3a, #ff873c, #ff823f, #ff7e41, #ff6a5e, #ff5d7c, #f05998, #d65db1)";
 </script>
 <template>
-  <n-card class="shadow">
-    <n-space justify="center" align="center">
-      <n-gradient-text type="warning" :size="24" :gradient="linear"
-        >网信委大家庭期待你的加入</n-gradient-text
-      >
-    </n-space>
-    <n-result status="404" description="报名信息填错了？">
+  <n-card class="shadow" content-style="display:flex;align-items:center">
+    <n-result status="404">
+      <n-space justify="center" align="center">
+        <n-gradient-text type="warning" :size="24" :gradient="linear"
+          >网信委大家庭期待你的加入</n-gradient-text
+        >
+        <n-text>报名信息填错了？</n-text>
+      </n-space>
       <template #footer>
         <n-button type="primary" text @click="router.push({ path: '/' })"
           >重新报名</n-button
