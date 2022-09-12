@@ -1,15 +1,29 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from "vue";
+import { defineComponent, onMounted, reactive, ref, watch } from "vue";
 import { FormInst, SelectOption, UploadFileInfo, useMessage } from "naive-ui";
 import { compressAccurately } from "image-conversion";
 import { IApply, ISubmitType, IPicList } from "../types/index";
 import { collegeOptions, sectionOptions } from "../assets/ts/options";
 import { formRules } from "../assets/ts/rules";
 import { baseAxios, toBase64 } from "../const";
-import { useRouter } from "vue-router";
-const router = useRouter();
+import Welcome from "./Welcome.vue";
+
 const message = useMessage();
 const formRef = ref<FormInst | null>(null);
+const emptyModel = (): IApply => {
+  return {
+    id: null,
+    name: null,
+    sex: null,
+    college: null,
+    major: null,
+    firstIntention: null,
+    secondIntention: null,
+    phone: null,
+    adjust: false,
+    introduction: null,
+  };
+};
 const applyModel: IApply = reactive({
   id: null,
   name: null,
@@ -22,6 +36,15 @@ const applyModel: IApply = reactive({
   adjust: false,
   introduction: null,
 });
+const init = ():void => {
+  btnDisabled.value = false;
+  Object.assign(firstSectionOption,sectionOptions);
+  Object.assign(secondSectionOption,sectionOptions);
+  Object.assign(applyModel,emptyModel());
+  currentSelectSection.splice(0,currentSelectSection.length);
+}
+const signin = ref<boolean>(true);
+const btnDisabled = ref<boolean>(false)
 const sexs: Array<string> = ["男", "女"];
 
 let qt_id: number = -1;
@@ -120,6 +143,7 @@ function onSubmit(evt: MouseEvent) {
   evt.preventDefault();
   formRef.value?.validate((err) => {
     if (!err) {
+      btnDisabled.value = true;
       let { name, sex, major, phone, adjust } = applyModel;
       let params = {
         id: -1,
@@ -148,16 +172,16 @@ function onSubmit(evt: MouseEvent) {
                 qt_id,
                 picture,
               };
-              baseAxios
-                .post("insertPic", params, {
-                  headers: {
-                    "Content-Type": "multipart/form-data",
-                  },
-                })
-                .finally(() => {
-                  router.push({ path: "/welcome" });
-                });
+              baseAxios.post("insertPic", params, {
+                headers: {
+                  "Content-Type": "multipart/form-data",
+                },
+              });
             }
+          })
+          .finally(() => {
+            init();
+            signin.value = false;
           })
           .catch((err) => {
             message.error(err);
@@ -177,32 +201,28 @@ function onSubmit(evt: MouseEvent) {
                   qt_id: submitType.formid,
                   picture,
                 };
-                baseAxios
-                  .post("insertPic", params, {
-                    headers: {
-                      "Content-Type": "multipart/form-data",
-                    },
-                  })
-                  .finally(() => {
-                    router.push({ path: "/welcome" });
-                  });
+                baseAxios.post("insertPic", params, {
+                  headers: {
+                    "Content-Type": "multipart/form-data",
+                  },
+                });
               } else {
                 let params = {
                   qt_id: submitType.formid,
                   id: pic_id,
                   picture,
                 };
-                baseAxios
-                  .post("updatePic", params, {
-                    headers: {
-                      "Content-Type": "multipart/form-data",
-                    },
-                  })
-                  .finally(() => {
-                    router.push({ path: "/welcome" });
-                  });
+                baseAxios.post("updatePic", params, {
+                  headers: {
+                    "Content-Type": "multipart/form-data",
+                  },
+                });
               }
             }
+          })
+          .finally(() => {
+            init();
+            signin.value = false;
           })
           .catch((err) => {
             message.error(err);
@@ -257,7 +277,7 @@ function checkFileType(data: {
 }
 </script>
 <template>
-  <n-card class="shadow">
+  <n-card class="shadow" v-if="signin">
     <n-form
       size="medium"
       label-placement="top"
@@ -348,11 +368,12 @@ function checkFileType(data: {
         </n-space>
       </n-form-item>
       <n-form-item>
-        <n-button style="width: 100%" @click="onSubmit" type="primary"
+        <n-button style="width: 100%" @click="onSubmit" type="primary" :disabled="btnDisabled"
           >提交</n-button
         >
       </n-form-item>
     </n-form>
   </n-card>
+  <Welcome @btnClick="signin = true" v-else />
 </template>
 <style lang="scss" scoped></style>

@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { onMounted,defineEmits } from "vue";
 import confetti from "canvas-confetti";
-const router = useRouter();
+const emit = defineEmits(['btnClick']);
+const btnClick = () => {
+
+  emit('btnClick',null);
+}
 onMounted(() => {
   const count = 200;
   const defaults = {
@@ -62,7 +65,7 @@ const linear =
         <n-text>报名信息填错了？</n-text>
       </n-space>
       <template #footer>
-        <n-button type="primary" text @click="router.push({ path: '/' })"
+        <n-button type="primary" text @click="btnClick"
           >重新报名</n-button
         >
       </template>

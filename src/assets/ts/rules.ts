@@ -64,7 +64,7 @@ export const formRules: FormRules = {
     {
       required: true,
       validator(rules: FormItemRule, value: string) {
-        const phone_grep = /^[1][3,4,5,7,8][0-9]{9}$/;
+        const phone_grep = /^[1][3,4,5,6,7,8,9][0-9]{9}$/;
         if (!value) {
           return new Error("请输入手机号码");
         }
